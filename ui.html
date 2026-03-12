@@ -37,6 +37,23 @@
     groupTitle.className = 'group-title'
     groupTitle.textContent = group.name
     groupSummary.appendChild(groupTitle)
+
+    let createGroupButton = document.createElement('button')
+    createGroupButton.className = 'secondary-button group-create-all-button'
+    createGroupButton.textContent = 'Create all palettes in group'
+    createGroupButton.addEventListener('click', (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      parent.postMessage({
+        pluginMessage: {
+          type: 'create-group-palettes',
+          collectionId: collectionId,
+          groupPath: group.path
+        }
+      }, '*')
+    })
+    groupSummary.appendChild(createGroupButton)
+
     groupSection.appendChild(groupSummary)
 
     let groupBody = document.createElement('div')
@@ -178,6 +195,7 @@
     font-size: 1rem;
     font-weight: var(--font-weight-medium);
     display: inline;
+    margin-right: var(--small-gap);
   }
 
   p {
@@ -246,6 +264,10 @@
   summary {
     padding-bottom: var(--small-gap);
     padding-top: var(--small-gap);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--small-gap);
   }
 
   summary:hover {
@@ -315,6 +337,10 @@
     gap: var(--small-gap);
     padding-left: var(--small-gap);
     margin-top: var(--small-gap);
+  }
+
+  .group-create-all-button {
+    margin-left: auto;
   }
 
   .palette-row {

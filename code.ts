@@ -11,6 +11,8 @@ let boldFont = { family: "Inter", style: "Bold" };
 let regularFont = { family: "Inter", style: "Regular" };
 let textColor = { r: 0, g: 0, b: 0 };
 let borderColor = { r: 0.8, g: 0.8, b: 0.8 };
+let surfaceColor = { r: 1, g: 1, b: 1 };
+let surfaceColorSunken = { r: 0.95, g: 0.95, b: 0.95 };
 
 class ColorVariable {
   name: string;
@@ -140,6 +142,63 @@ function getPaletteByPath(
   return currentGroup.palettes[paletteName] ?? null;
 }
 
+function getGroupByPath(
+  rootGroup: VariableHierarchyGroup,
+  groupPath: string
+): VariableHierarchyGroup | null {
+  const parts = groupPath
+    .split('/')
+    .map(part => part.trim())
+    .filter(Boolean);
+
+  let currentGroup = rootGroup;
+  for (const groupPart of parts) {
+    const nextGroup = currentGroup.groups[groupPart];
+    if (!nextGroup) return null;
+    currentGroup = nextGroup;
+  }
+
+  return currentGroup;
+}
+
+function collectPalettesFromGroup(group: VariableHierarchyGroup): VariableHierarchyPalette[] {
+  const palettes: VariableHierarchyPalette[] = [];
+  for (const key in group.palettes) {
+    palettes.push(group.palettes[key]);
+  }
+
+  for (const key in group.groups) {
+    palettes.push(...collectPalettesFromGroup(group.groups[key]));
+  }
+
+  return palettes;
+}
+
+async function createPaletteGroupFrame(
+  group: VariableHierarchyGroup,
+  palettes: VariableHierarchyPalette[]
+): Promise<void> {
+  if (palettes.length === 0) return;
+
+  const paletteGroupFrame = figma.createFrame();
+  paletteGroupFrame.name = `Group: ${group.path || group.name}`;
+  paletteGroupFrame.layoutMode = 'VERTICAL';
+  paletteGroupFrame.layoutSizingHorizontal = 'HUG';
+  paletteGroupFrame.layoutSizingVertical = 'HUG';
+  paletteGroupFrame.itemSpacing = dimensionLarge;
+  paletteGroupFrame.fills = [{ type: "SOLID", color: surfaceColorSunken }];
+  paletteGroupFrame.paddingLeft =
+    paletteGroupFrame.paddingRight =
+    paletteGroupFrame.paddingTop =
+    paletteGroupFrame.paddingBottom =
+    dimensionLarge;
+  setBorderRadiusForAll(paletteGroupFrame, dimensionMedium);
+
+  for (const palette of palettes) {
+    await createPalette(palette, paletteGroupFrame);
+  }
+}
+
 (async () => {
   // Initialize the fonts
   await figma.loadFontAsync(boldFont);
@@ -180,7 +239,7 @@ function getPaletteByPath(
   figma.ui.postMessage({ collectionHierarchies });
 
   // On button click in the UI, create a palette frame for the corresponding palette
-  figma.ui.onmessage = (msg) => {
+  figma.ui.onmessage = async (msg) => {
     // Support both old and new UI payload formats.
     if (msg.type === 'create-palette') {
       const collectionId = msg.collectionId;
@@ -192,6 +251,21 @@ function getPaletteByPath(
 
       const paletteToCreate = getPaletteByPath(hierarchyRoot, palettePath);
       if (paletteToCreate) createPalette(paletteToCreate);
+    }
+
+    if (msg.type === 'create-group-palettes') {
+      const collectionId = msg.collectionId;
+      const groupPath = msg.groupPath;
+      if (typeof collectionId !== 'string' || typeof groupPath !== 'string') return;
+
+      const hierarchyRoot = hierarchyByCollectionId.get(collectionId);
+      if (!hierarchyRoot) return;
+
+      const groupToCreate = getGroupByPath(hierarchyRoot, groupPath);
+      if (!groupToCreate) return;
+
+      const palettes = collectPalettesFromGroup(groupToCreate);
+      await createPaletteGroupFrame(groupToCreate, palettes);
     }
   }
 })();
@@ -213,7 +287,7 @@ function setBorderRadiusForAll(figmaFrame: FrameNode, radius: number) {
  * 
  * @param colorPaletteToCreate the hierarchy palette to render in Figma
  */
-async function createPalette(colorPaletteToCreate: VariableHierarchyPalette) {
+async function createPalette(colorPaletteToCreate: VariableHierarchyPalette, parentFrame?: FrameNode) {
   // Define some constants for styling the palette frames and text
 
   const colorPalette = colorPaletteToCreate;
@@ -221,6 +295,7 @@ async function createPalette(colorPaletteToCreate: VariableHierarchyPalette) {
   if (colorPalette) {
     // Create a frame named {paletteName}
     let paletteFrame = figma.createFrame()
+    if (parentFrame) parentFrame.appendChild(paletteFrame)
     paletteFrame.name = colorPalette.name
     paletteFrame.layoutMode = 'VERTICAL'
     paletteFrame.paddingLeft =
@@ -231,6 +306,7 @@ async function createPalette(colorPaletteToCreate: VariableHierarchyPalette) {
     paletteFrame.layoutSizingHorizontal = 'HUG'
     paletteFrame.itemSpacing = dimensionMedium
     setBorderRadiusForAll(paletteFrame, dimensionMedium);
+    paletteFrame.fills = [{ type: "SOLID", color: surfaceColor }];
 
 
     // Create a text with the {paletteName}
