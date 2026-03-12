@@ -11,33 +11,43 @@
 
   const colorPaletteDiv = document.getElementById('colorPaletteDiv')
 
-  onmessage = (event) => {
+  function createPaletteRow(palette) {
+    let singlePaletteDiv = document.createElement('div')
+    singlePaletteDiv.id = palette.path
 
-    // Show all collections
-    let pluginMessage = event.data.pluginMessage
-    let localVariableCollectionNames = pluginMessage.localCollectionsFormatted
-    let colorPalettes = pluginMessage.colorPalettesOfCollection
+    let paletteNameP = document.createElement('p')
+    paletteNameP.textContent = palette.path
+    singlePaletteDiv.appendChild(paletteNameP)
 
-    colorPalettes?.forEach(palette => {
-      // Create a div container
-      let singlePaletteDiv = document.createElement('div')
-      singlePaletteDiv.id = palette.name
-      // Add the name of the group
-      let paletteNameP = document.createElement('p')
-      paletteNameP.textContent = palette.name
-      singlePaletteDiv.appendChild(paletteNameP)
-      // Add a button
-      let createPaletteButton = document.createElement('button')
-      createPaletteButton.className = "secondary-button"
-      createPaletteButton.textContent = "Create color palette"
-      // Add event listener to the button
-      createPaletteButton.addEventListener('click', () => {
-        parent.postMessage({ pluginMessage: { type: 'create-palette', paletteName: palette.name } }, '*')
-      })
-      singlePaletteDiv.appendChild(createPaletteButton)
-
-      colorPaletteDiv.appendChild(singlePaletteDiv)
+    let createPaletteButton = document.createElement('button')
+    createPaletteButton.className = "secondary-button"
+    createPaletteButton.textContent = "Create color palette"
+    createPaletteButton.addEventListener('click', () => {
+      parent.postMessage({ pluginMessage: { type: 'create-palette', palettePath: palette.path } }, '*')
     })
+    singlePaletteDiv.appendChild(createPaletteButton)
+
+    return singlePaletteDiv
+  }
+
+  function renderHierarchyGroup(group) {
+    if (!group) return
+
+    Object.values(group.palettes || {}).forEach(palette => {
+      colorPaletteDiv.appendChild(createPaletteRow(palette))
+    })
+
+    Object.values(group.groups || {}).forEach(childGroup => {
+      renderHierarchyGroup(childGroup)
+    })
+  }
+
+  onmessage = (event) => {
+    let pluginMessage = event.data.pluginMessage
+    let hierarchyRoot = pluginMessage.colorVariableHierarchy
+
+    colorPaletteDiv.innerHTML = ''
+    renderHierarchyGroup(hierarchyRoot)
   }
 
    
