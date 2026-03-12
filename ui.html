@@ -1,53 +1,75 @@
 <div id="pluginWrapper">
   <h2>Local variable collections</h2>
-  <div>
-    <h3>Name</h3>
-    <div id="colorPaletteDiv">
-
-    </div>
-  </div>
+  <div id="variableCollectionDiv"></div>
 </div>
 <script>
 
-  const colorPaletteDiv = document.getElementById('colorPaletteDiv')
+  const variableCollectionDiv = document.getElementById('variableCollectionDiv')
 
   function createPaletteRow(palette) {
-    let singlePaletteDiv = document.createElement('div')
-    singlePaletteDiv.id = palette.path
+    let paletteRow = document.createElement('div')
+    paletteRow.className = 'palette-row'
+    paletteRow.id = palette.path
 
     let paletteNameP = document.createElement('p')
-    paletteNameP.textContent = palette.path
-    singlePaletteDiv.appendChild(paletteNameP)
+    paletteNameP.className = 'palette-name'
+    paletteNameP.textContent = palette.name
+    paletteRow.appendChild(paletteNameP)
 
     let createPaletteButton = document.createElement('button')
-    createPaletteButton.className = "secondary-button"
-    createPaletteButton.textContent = "Create color palette"
+    createPaletteButton.className = 'secondary-button'
+    createPaletteButton.textContent = 'Create color palette'
     createPaletteButton.addEventListener('click', () => {
       parent.postMessage({ pluginMessage: { type: 'create-palette', palettePath: palette.path } }, '*')
     })
-    singlePaletteDiv.appendChild(createPaletteButton)
+    paletteRow.appendChild(createPaletteButton)
 
-    return singlePaletteDiv
+    return paletteRow
   }
 
-  function renderHierarchyGroup(group) {
-    if (!group) return
+  function renderGroupNode(group) {
+    let groupSection = document.createElement('details')
+    groupSection.className = 'group-section'
+    groupSection.open = true
+
+    let groupSummary = document.createElement('summary')
+
+    let groupTitle = document.createElement('h3')
+    groupTitle.className = 'group-title'
+    groupTitle.textContent = group.name
+    groupSummary.appendChild(groupTitle)
+    groupSection.appendChild(groupSummary)
+
+    let groupBody = document.createElement('div')
+    groupBody.className = 'group-body'
 
     Object.values(group.palettes || {}).forEach(palette => {
-      colorPaletteDiv.appendChild(createPaletteRow(palette))
+      groupBody.appendChild(createPaletteRow(palette))
     })
 
     Object.values(group.groups || {}).forEach(childGroup => {
-      renderHierarchyGroup(childGroup)
+      groupBody.appendChild(renderGroupNode(childGroup))
     })
+
+    groupSection.appendChild(groupBody)
+    return groupSection
   }
 
   onmessage = (event) => {
     let pluginMessage = event.data.pluginMessage
     let hierarchyRoot = pluginMessage.colorVariableHierarchy
 
-    colorPaletteDiv.innerHTML = ''
-    renderHierarchyGroup(hierarchyRoot)
+    variableCollectionDiv.innerHTML = ''
+
+    if (!hierarchyRoot) return
+
+    Object.values(hierarchyRoot.groups || {}).forEach(group => {
+      variableCollectionDiv.appendChild(renderGroupNode(group))
+    })
+
+    Object.values(hierarchyRoot.palettes || {}).forEach(palette => {
+      variableCollectionDiv.appendChild(createPaletteRow(palette))
+    })
   }
 
    
@@ -126,6 +148,12 @@
     font-weight: var(--font-weight-medium);
   }
 
+  .group-title {
+    font-size: 1rem;
+    font-weight: var(--font-weight-medium);
+    display: inline;
+  }
+
   p {
     margin: 0;
   }
@@ -190,7 +218,6 @@
     * Style the summary
     */
   summary {
-
     padding-bottom: var(--small-gap);
     padding-top: var(--small-gap);
   }
@@ -219,6 +246,40 @@
 
   #pluginWrapper {
     padding: var(--large-gap);
+  }
+
+  #variableCollectionDiv {
+    display: flex;
+    flex-direction: column;
+    gap: var(--medium-gap);
+  }
+
+  .group-section {
+    border: 1px solid var(--color-divider-low-emphasis);
+    border-radius: var(--medium-gap);
+    padding: 0 var(--medium-gap) var(--medium-gap) var(--medium-gap);
+  }
+
+  .group-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--small-gap);
+    padding-left: var(--small-gap);
+    margin-top: var(--small-gap);
+  }
+
+  .palette-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--small-gap);
+    padding: var(--small-gap);
+    border: 1px solid var(--color-divider-low-emphasis);
+    border-radius: var(--small-gap);
+  }
+
+  .palette-name {
+    color: var(--color-text-medium-emphasis);
   }
 
   /**
