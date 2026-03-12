@@ -2,82 +2,46 @@
   <h2>Local variable collections</h2>
   <div>
     <h3>Name</h3>
-    <div id="colorGroupsDiv">
+    <div id="colorPaletteDiv">
 
     </div>
   </div>
 </div>
 <script>
 
-  const colorGroupsDiv = document.getElementById('colorGroupsDiv')
+  const colorPaletteDiv = document.getElementById('colorPaletteDiv')
 
   onmessage = (event) => {
 
     // Show all collections
     let pluginMessage = event.data.pluginMessage
-    debugger;
+    let localVariableCollectionNames = pluginMessage.localCollectionsFormatted
+    let colorPalettes = pluginMessage.colorPalettesOfCollection
 
-    let colorGroups = pluginMessage.colorGroups
-    colorGroups.forEach(group => {
+    debugger
+    colorPalettes?.forEach(palette => {
       // Create a div container
-      let singleGroupDiv = document.createElement('div')
-      singleGroupDiv.id = group.name
+      let singlePaletteDiv = document.createElement('div')
+      singlePaletteDiv.id = palette.name
       // Add the name of the group
-      let groupName = document.createElement('p')
-      groupName.textContent = group.name
-      singleGroupDiv.appendChild(groupName)
+      let paletteNameP = document.createElement('p')
+      paletteNameP.textContent = palette.name
+      singlePaletteDiv.appendChild(paletteNameP)
       // Add a button
-      let groupButton = document.createElement('button')
-      groupButton.className = "secondary-button"
-      groupButton.textContent = "Create color palettes"
-      singleGroupDiv.appendChild(groupButton)
+      let createPaletteButton = document.createElement('button')
+      createPaletteButton.className = "secondary-button"
+      createPaletteButton.textContent = "Create color palette"
+      // Add event listener to the button
+      createPaletteButton.addEventListener('click', () => {
+        parent.postMessage({ pluginMessage: { type: 'create-palette', paletteName: palette.name } }, '*')
+      })
+      singlePaletteDiv.appendChild(createPaletteButton)
 
-      colorGroupsDiv.appendChild(singleGroupDiv)
+      colorPaletteDiv.appendChild(singlePaletteDiv)
     })
   }
 
-  createPalette = (colorPalette) => {
-    // Create a frame named {paletteName}
-    let paletteFrame = figma.createFrame()
-    paletteFrame.name = colorPalette.name
-
-    // Create a text with the {paletteName}
-    let paletteNameText = figma.createText()
-    paletteNameText.characters = colorPalette.name
-
-    // Add a frame named "Colors"
-    let colorsFrame = figma.createFrame()
-    colorsFrame.name = "Colors"
-
-    // Add a frame "Color Wrapper" for each color
-    colorPalette.colors.forEach(color => { // todo check was hier tatsächlich ankommt
-      debugger;
-      let colorWrapper = figma.createFrame()
-      colorWrapper.name = "Color Wrapper"
-
-      // Add the name of the color. E.g. "100", "200" etc.
-      let colorValueText = figma.createText()
-      colorValueText.characters = color.name
-      colorWrapper.appendChild(colorValueText)
-
-      // Add a frame filled with the color
-      let colorFrame = figma.createFrame()
-      colorFrame.name = "Color"
-      colorFrame.fills = [{ type: 'SOLID', color: color.value }] // todo hier muss variable gesetzt werden!
-      colorWrapper.appendChild(colorFrame)
-      
-      colorsFrame.appendChild(colorWrapper)
-    })
-
-
-    // Fills and strokes must be set via their immutable arrays
-    // node.setBoundVariable('width', widthVariable)
-    // const fillsCopy = clone(node.fills)
-    // fillsCopy[0] = figma.variables.setBoundVariableForPaint(fillsCopy[0], 'color', colorVariable)
-    // node.fills = fillsCopy
-
-  }
-
+   
 
 </script>
 <style>
