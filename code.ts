@@ -105,12 +105,12 @@ class MyColorPalette {
         paletteFrame.paddingTop =
         paletteFrame.paddingBottom =
         dimensionLarge;
-        paletteFrame.layoutSizingHorizontal = 'HUG'
+      paletteFrame.layoutSizingHorizontal = 'HUG'
 
       // Create a text with the {paletteName}
       let paletteNameText = figma.createText()
-      paletteNameText.fontName = boldFont;
       paletteFrame.appendChild(paletteNameText) // Place in frame
+      paletteNameText.fontName = boldFont;
       paletteNameText.fills = [{ type: "SOLID", color: textColor }]
       paletteNameText.name = "Palette Name"
       paletteNameText.characters = colorPalette.name
@@ -118,21 +118,22 @@ class MyColorPalette {
 
       // Add a frame named "Colors"
       let colorsFrame = figma.createFrame()
+       paletteFrame.appendChild(colorsFrame) // Place in frame
       colorsFrame.name = "Colors"
       colorsFrame.layoutMode = 'HORIZONTAL'
       colorsFrame.itemSpacing = dimensionSmall
-      paletteFrame.appendChild(colorsFrame) // Place in frame
 
       /**
        * Add each color
        * color = { name: "100", id: "VariableID:1234:123" }
        */
       colorPalette.colors.forEach(async (color) => {
-        debugger;
         // Create a wrapper
         let colorWrapper = figma.createFrame()
+        colorsFrame.appendChild(colorWrapper) // Place in colors frame
         colorWrapper.name = "Color Wrapper"
         colorWrapper.layoutMode = 'VERTICAL'
+        colorWrapper.layoutSizingHorizontal = 'HUG'
         colorWrapper.paddingLeft =
           colorWrapper.paddingRight =
           colorWrapper.paddingTop =
@@ -142,6 +143,7 @@ class MyColorPalette {
 
         // Add the name of the color. E.g. "100", "200" etc.
         let colorValueText = figma.createText()
+        colorWrapper.appendChild(colorValueText) // Place in color wrapper
         colorValueText.fontName = regularFont;
         colorValueText.name = "Color Name"
         colorValueText.characters = color.name
@@ -149,18 +151,24 @@ class MyColorPalette {
         colorValueText.layoutAlign = 'STRETCH'
         colorWrapper.appendChild(colorValueText)
 
-        /* // Create a frame to be filled with the color
+        // Create a frame to be filled with the color
         let colorFrame = figma.createFrame()
+        colorWrapper.appendChild(colorFrame) // Place in color wrapper
         colorFrame.name = "Color"
+        colorFrame.resize(100, 100)
+        colorFrame.bottomLeftRadius =
+          colorFrame.bottomRightRadius =
+          colorFrame.topLeftRadius =
+          colorFrame.topRightRadius =
+          dimensionMedium;
         // Load the variable for the color id
         const fillColorVariable = await figma.variables.getVariableByIdAsync(color.id);
-        // Set it as a fill. This complicated construct is from the Figma doc
-        const fillsCopy = clone(colorFrame.fills)
-        fillsCopy[0] = figma.variables.setBoundVariableForPaint(fillsCopy[0], 'color', fillColorVariable)
-        colorFrame.fills = fillsCopy
-        colorWrapper.appendChild(colorFrame) */
-
-        colorsFrame.appendChild(colorWrapper)
+        // Fills are immutable, so copy the array before rebinding paint variables.
+        if (fillColorVariable && Array.isArray(colorFrame.fills) && colorFrame.fills.length > 0) {
+          const fillsCopy = colorFrame.fills.slice();
+          fillsCopy[0] = figma.variables.setBoundVariableForPaint(fillsCopy[0], 'color', fillColorVariable);
+          colorFrame.fills = fillsCopy;
+        }
       })
 
     }
