@@ -105,6 +105,7 @@ class MyColorPalette {
         paletteFrame.paddingTop =
         paletteFrame.paddingBottom =
         dimensionLarge;
+        paletteFrame.layoutSizingHorizontal = 'HUG'
 
       // Create a text with the {paletteName}
       let paletteNameText = figma.createText()
