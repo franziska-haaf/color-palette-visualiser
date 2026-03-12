@@ -1,6 +1,6 @@
 /// <reference types="@figma/plugin-typings" />
 
-figma.showUI(__html__);
+figma.showUI(__html__, { themeColors: true, /* other options */ })
 figma.ui.resize(800, 600)
 
 class ColorVariable {
@@ -91,6 +91,7 @@ class MyColorPalette {
     const regularFont = { family: "Inter", style: "Regular" };
     await figma.loadFontAsync(regularFont);
     const textColor = { r: 0, g: 0, b: 0 };
+    const borderColor = { r: 0.8, g: 0.8, b: 0.8 };
 
     const colorPalette = colorPalettesOfCollection.find(palette => palette.name === paletteName);
 
@@ -106,6 +107,9 @@ class MyColorPalette {
         paletteFrame.paddingBottom =
         dimensionLarge;
       paletteFrame.layoutSizingHorizontal = 'HUG'
+      paletteFrame.itemSpacing = dimensionMedium
+      setBorderRadiusForAll(paletteFrame, dimensionMedium);
+      
 
       // Create a text with the {paletteName}
       let paletteNameText = figma.createText()
@@ -121,7 +125,10 @@ class MyColorPalette {
        paletteFrame.appendChild(colorsFrame) // Place in frame
       colorsFrame.name = "Colors"
       colorsFrame.layoutMode = 'HORIZONTAL'
-      colorsFrame.itemSpacing = dimensionSmall
+      colorsFrame.layoutSizingVertical = 'HUG'
+      colorsFrame.itemSpacing = dimensionMedium
+
+      // todo bug: wenn es zwei mal die selbe palette mit selbem namen gibt wird das zusammen gepackt ( green-olive xD)
 
       /**
        * Add each color
@@ -138,7 +145,10 @@ class MyColorPalette {
           colorWrapper.paddingRight =
           colorWrapper.paddingTop =
           colorWrapper.paddingBottom =
-          dimensionSmall;
+          dimensionMedium;
+        colorWrapper.itemSpacing = dimensionSmall;
+        colorWrapper.strokes = [{ type: "SOLID", color: borderColor }];
+        setBorderRadiusForAll(colorWrapper, dimensionMedium);
         //todo add border
 
         // Add the name of the color. E.g. "100", "200" etc.
@@ -156,11 +166,8 @@ class MyColorPalette {
         colorWrapper.appendChild(colorFrame) // Place in color wrapper
         colorFrame.name = "Color"
         colorFrame.resize(100, 100)
-        colorFrame.bottomLeftRadius =
-          colorFrame.bottomRightRadius =
-          colorFrame.topLeftRadius =
-          colorFrame.topRightRadius =
-          dimensionMedium;
+        setBorderRadiusForAll(colorFrame, dimensionMedium);
+        
         // Load the variable for the color id
         const fillColorVariable = await figma.variables.getVariableByIdAsync(color.id);
         // Fills are immutable, so copy the array before rebinding paint variables.
@@ -172,14 +179,18 @@ class MyColorPalette {
       })
 
     }
-
-    // Fills and strokes must be set via their immutable arrays
-    // node.setBoundVariable('width', widthVariable)
-    // const fillsCopy = clone(node.fills)
-    // fillsCopy[0] = figma.variables.setBoundVariableForPaint(fillsCopy[0], 'color', colorVariable)
-    // node.fills = fillsCopy
-
   }
 })();
 
-
+/**
+ * A helper function to set the border radius for all corners of a frame
+ * @param figmaFrame the frame to set the border radius for all corners
+ * @param radius the radius to set
+ */
+function setBorderRadiusForAll(figmaFrame: FrameNode, radius: number) {
+  figmaFrame.bottomLeftRadius =
+    figmaFrame.bottomRightRadius =
+    figmaFrame.topLeftRadius =
+    figmaFrame.topRightRadius =
+    radius;
+}
