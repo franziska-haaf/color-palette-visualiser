@@ -3,6 +3,8 @@
 figma.showUI(__html__, { themeColors: true, /* other options */ })
 figma.ui.resize(800, 600)
 
+
+
 class ColorVariable {
   name: string;
   id: string;
@@ -22,8 +24,18 @@ class MyColorPalette {
   }
 }
 
-
 (async () => {
+  // Define some constants for styling the palette frames and text
+  const dimensionLarge = 16;
+  const dimensionMedium = 8;
+  const dimensionSmall = 4;
+  const boldFont = { family: "Inter", style: "Bold" };
+  await figma.loadFontAsync(boldFont);
+  const regularFont = { family: "Inter", style: "Regular" };
+  await figma.loadFontAsync(regularFont);
+  const textColor = { r: 0, g: 0, b: 0 };
+  const borderColor = { r: 0.8, g: 0.8, b: 0.8 };
+
   // Load the local variable collections
   const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
 
@@ -83,20 +95,11 @@ class MyColorPalette {
   }
 
   async function createPalette(paletteName: string) {
-    const dimensionLarge = 16;
-    const dimensionMedium = 8;
-    const dimensionSmall = 4;
-    const boldFont = { family: "Inter", style: "Bold" };
-    await figma.loadFontAsync(boldFont);
-    const regularFont = { family: "Inter", style: "Regular" };
-    await figma.loadFontAsync(regularFont);
-    const textColor = { r: 0, g: 0, b: 0 };
-    const borderColor = { r: 0.8, g: 0.8, b: 0.8 };
+
 
     const colorPalette = colorPalettesOfCollection.find(palette => palette.name === paletteName);
 
     if (colorPalette) {
-
       // Create a frame named {paletteName}
       let paletteFrame = figma.createFrame()
       paletteFrame.name = colorPalette.name
@@ -109,7 +112,7 @@ class MyColorPalette {
       paletteFrame.layoutSizingHorizontal = 'HUG'
       paletteFrame.itemSpacing = dimensionMedium
       setBorderRadiusForAll(paletteFrame, dimensionMedium);
-      
+
 
       // Create a text with the {paletteName}
       let paletteNameText = figma.createText()
@@ -122,7 +125,7 @@ class MyColorPalette {
 
       // Add a frame named "Colors"
       let colorsFrame = figma.createFrame()
-       paletteFrame.appendChild(colorsFrame) // Place in frame
+      paletteFrame.appendChild(colorsFrame) // Place in frame
       colorsFrame.name = "Colors"
       colorsFrame.layoutMode = 'HORIZONTAL'
       colorsFrame.layoutSizingVertical = 'HUG'
@@ -167,7 +170,7 @@ class MyColorPalette {
         colorFrame.name = "Color"
         colorFrame.resize(100, 100)
         setBorderRadiusForAll(colorFrame, dimensionMedium);
-        
+
         // Load the variable for the color id
         const fillColorVariable = await figma.variables.getVariableByIdAsync(color.id);
         // Fills are immutable, so copy the array before rebinding paint variables.
