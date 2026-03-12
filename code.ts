@@ -181,7 +181,7 @@ async function createPaletteGroupFrame(
   if (palettes.length === 0) return;
 
   const paletteGroupFrame = figma.createFrame();
-  paletteGroupFrame.name = `Group: ${group.path || group.name}`;
+  paletteGroupFrame.name = `${group.path || group.name}`;
   paletteGroupFrame.layoutMode = 'VERTICAL';
   paletteGroupFrame.layoutSizingHorizontal = 'HUG';
   paletteGroupFrame.layoutSizingVertical = 'HUG';
@@ -375,6 +375,6 @@ async function createPalette(colorPaletteToCreate: VariableHierarchyPalette, par
         colorFrame.fills = fillsCopy;
       }
     })
-
+    figma.viewport.scrollAndZoomIntoView([paletteFrame])
   }
 }

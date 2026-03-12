@@ -17,7 +17,7 @@
 
     let createPaletteButton = document.createElement('button')
     createPaletteButton.className = 'secondary-button'
-    createPaletteButton.textContent = 'Create color palette'
+    createPaletteButton.textContent = 'Create palette'
     createPaletteButton.addEventListener('click', () => {
       parent.postMessage({ pluginMessage: { type: 'create-palette', collectionId: collectionId, palettePath: palette.path } }, '*')
     })
@@ -33,14 +33,19 @@
 
     let groupSummary = document.createElement('summary')
 
+    let summaryContentWrapper = document.createElement('div')
+    summaryContentWrapper.classList.add('summary-content-wrapper')
+
     let groupTitle = document.createElement('h3')
+    summaryContentWrapper.appendChild(groupTitle)
     groupTitle.className = 'group-title'
     groupTitle.textContent = group.name
-    groupSummary.appendChild(groupTitle)
+   
 
     let createGroupButton = document.createElement('button')
+    summaryContentWrapper.appendChild(createGroupButton)
     createGroupButton.className = 'secondary-button group-create-all-button'
-    createGroupButton.textContent = 'Create all palettes in group'
+    createGroupButton.textContent = 'Create palettes for whole group'
     createGroupButton.addEventListener('click', (event) => {
       event.preventDefault()
       event.stopPropagation()
@@ -52,7 +57,7 @@
         }
       }, '*')
     })
-    groupSummary.appendChild(createGroupButton)
+    groupSummary.appendChild(summaryContentWrapper)
 
     groupSection.appendChild(groupSummary)
 
@@ -264,7 +269,7 @@
   summary {
     padding-bottom: var(--small-gap);
     padding-top: var(--small-gap);
-    display: flex;
+    
     align-items: center;
     justify-content: space-between;
     gap: var(--small-gap);
@@ -273,6 +278,13 @@
   summary:hover {
     cursor: pointer;
     text-decoration: underline;
+  }
+
+  summary .summary-content-wrapper{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--small-gap);
   }
 
   /**
