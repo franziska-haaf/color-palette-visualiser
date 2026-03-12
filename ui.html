@@ -1,12 +1,11 @@
 <div id="pluginWrapper">
-  <h2>Local variable collections</h2>
   <div id="variableCollectionDiv"></div>
 </div>
 <script>
 
   const variableCollectionDiv = document.getElementById('variableCollectionDiv')
 
-  function createPaletteRow(palette) {
+  function createPaletteRow(collectionId, palette) {
     let paletteRow = document.createElement('div')
     paletteRow.className = 'palette-row'
     paletteRow.id = palette.path
@@ -20,17 +19,17 @@
     createPaletteButton.className = 'secondary-button'
     createPaletteButton.textContent = 'Create color palette'
     createPaletteButton.addEventListener('click', () => {
-      parent.postMessage({ pluginMessage: { type: 'create-palette', palettePath: palette.path } }, '*')
+      parent.postMessage({ pluginMessage: { type: 'create-palette', collectionId: collectionId, palettePath: palette.path } }, '*')
     })
     paletteRow.appendChild(createPaletteButton)
 
     return paletteRow
   }
 
-  function renderGroupNode(group) {
+  function renderGroupNode(collectionId, group) {
     let groupSection = document.createElement('details')
     groupSection.className = 'group-section'
-    groupSection.open = true
+    groupSection.open = false
 
     let groupSummary = document.createElement('summary')
 
@@ -44,31 +43,58 @@
     groupBody.className = 'group-body'
 
     Object.values(group.palettes || {}).forEach(palette => {
-      groupBody.appendChild(createPaletteRow(palette))
+      groupBody.appendChild(createPaletteRow(collectionId, palette))
     })
 
     Object.values(group.groups || {}).forEach(childGroup => {
-      groupBody.appendChild(renderGroupNode(childGroup))
+      groupBody.appendChild(renderGroupNode(collectionId, childGroup))
     })
 
     groupSection.appendChild(groupBody)
     return groupSection
   }
 
-  onmessage = (event) => {
-    let pluginMessage = event.data.pluginMessage
-    let hierarchyRoot = pluginMessage.colorVariableHierarchy
+  function renderCollectionNode(collection) {
+    let collectionSection = document.createElement('details')
+    collectionSection.className = 'collection-section'
+    collectionSection.open = true
 
-    variableCollectionDiv.innerHTML = ''
+    let collectionSummary = document.createElement('summary')
+    collectionSummary.className = 'collection-summary'
 
-    if (!hierarchyRoot) return
+    let collectionTitle = document.createElement('h2')
+    collectionTitle.className = 'collection-title'
+    collectionTitle.textContent = collection.name
+    collectionSummary.appendChild(collectionTitle)
+    collectionSection.appendChild(collectionSummary)
+
+    let collectionBody = document.createElement('div')
+    collectionBody.className = 'collection-body'
+
+    const hierarchyRoot = collection.hierarchy || {}
 
     Object.values(hierarchyRoot.groups || {}).forEach(group => {
-      variableCollectionDiv.appendChild(renderGroupNode(group))
+      collectionBody.appendChild(renderGroupNode(collection.id, group))
     })
 
     Object.values(hierarchyRoot.palettes || {}).forEach(palette => {
-      variableCollectionDiv.appendChild(createPaletteRow(palette))
+      collectionBody.appendChild(createPaletteRow(collection.id, palette))
+    })
+
+    collectionSection.appendChild(collectionBody)
+    return collectionSection
+  }
+
+  onmessage = (event) => {
+    let pluginMessage = event.data.pluginMessage
+    let collectionHierarchies = pluginMessage.collectionHierarchies
+
+    variableCollectionDiv.innerHTML = ''
+
+    if (!collectionHierarchies) return
+
+    collectionHierarchies.forEach(collection => {
+      variableCollectionDiv.appendChild(renderCollectionNode(collection))
     })
   }
 
@@ -252,6 +278,29 @@
     display: flex;
     flex-direction: column;
     gap: var(--medium-gap);
+  }
+
+  .collection-section {
+    border: 1px solid var(--color-divider-low-emphasis);
+    border-radius: var(--medium-gap);
+    padding: 0 var(--medium-gap) var(--medium-gap) var(--medium-gap);
+  }
+
+  .collection-summary {
+    padding-top: var(--small-gap);
+    padding-bottom: var(--small-gap);
+  }
+
+  .collection-title {
+    display: inline;
+    font-size: 1.125rem;
+  }
+
+  .collection-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--small-gap);
+    margin-top: var(--small-gap);
   }
 
   .group-section {

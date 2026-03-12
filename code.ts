@@ -54,6 +54,12 @@ class VariableHierarchyGroup {
   }
 }
 
+type CollectionHierarchy = {
+  id: string;
+  name: string;
+  hierarchy: VariableHierarchyGroup;
+};
+
 type InsertedVariableInfo = {
   palettePath: string;
   variableName: string;
@@ -142,40 +148,47 @@ function getPaletteByPath(
   // Load the local variable collections
   const localCollections = await figma.variables.getLocalVariableCollectionsAsync();
 
-  // Send all available local variable collections to the UI
-  let localCollectionsFormatted = [{}]
-  localCollections.forEach(collection => {
-    localCollectionsFormatted.push({ name: collection.name, id: collection.id })
-  })
-  figma.ui.postMessage({ localCollections: localCollectionsFormatted });
+  const collectionHierarchies: CollectionHierarchy[] = [];
+  const hierarchyByCollectionId = new Map<string, VariableHierarchyGroup>();
 
-  // todo for testing purposes only first collection is fully loaded
-  const firstCollection = localCollections[0];
+  for (const localCollection of localCollections) {
+    const hierarchyRoot = new VariableHierarchyGroup('root', '');
 
-  const hierarchyRoot = new VariableHierarchyGroup('root', '');
-  /**
-   * Go over each variable in the variable collection
-   * variable.name = "color / tomato / 100"
-   */
-  for (let variableId of firstCollection.variableIds) {
-    const variable = await figma.variables.getVariableByIdAsync(variableId);
+    /**
+     * Go over each variable in the variable collection
+     * variable.name = "color / tomato / 100"
+     */
+    for (const variableId of localCollection.variableIds) {
+      const variable = await figma.variables.getVariableByIdAsync(variableId);
 
-    // If it's a color, check for an existing group or create one and add it either way.
-    if (variable?.resolvedType === 'COLOR') {
-      const variableNameHierarchy = normalizeVariableNameHierarchy(variable.name);
-      insertIntoHierarchy(hierarchyRoot, variableNameHierarchy, variable.id);
+      // If it's a color, check for an existing group or create one and add it either way.
+      if (variable?.resolvedType === 'COLOR') {
+        const variableNameHierarchy = normalizeVariableNameHierarchy(variable.name);
+        insertIntoHierarchy(hierarchyRoot, variableNameHierarchy, variable.id);
+      }
     }
+
+    hierarchyByCollectionId.set(localCollection.id, hierarchyRoot);
+    collectionHierarchies.push({
+      id: localCollection.id,
+      name: localCollection.name,
+      hierarchy: hierarchyRoot
+    });
   }
 
-  console.log('colorVariableHierarchy', hierarchyRoot);
-  figma.ui.postMessage({ colorVariableHierarchy: hierarchyRoot });
+  console.log('collectionHierarchies', collectionHierarchies);
+  figma.ui.postMessage({ collectionHierarchies });
 
   // On button click in the UI, create a palette frame for the corresponding palette
   figma.ui.onmessage = (msg) => {
     // Support both old and new UI payload formats.
     if (msg.type === 'create-palette') {
+      const collectionId = msg.collectionId;
       const palettePath = msg.palettePath ?? msg.paletteName ?? msg.palette;
-      if (typeof palettePath !== 'string') return;
+      if (typeof collectionId !== 'string' || typeof palettePath !== 'string') return;
+
+      const hierarchyRoot = hierarchyByCollectionId.get(collectionId);
+      if (!hierarchyRoot) return;
 
       const paletteToCreate = getPaletteByPath(hierarchyRoot, palettePath);
       if (paletteToCreate) createPalette(paletteToCreate);
