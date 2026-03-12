@@ -1,0 +1,278 @@
+<div id="pluginWrapper">
+  <h2>Local variable collections</h2>
+  <div>
+    <h3>Name</h3>
+    <div id="colorGroupsDiv">
+
+    </div>
+  </div>
+</div>
+<script>
+
+  const colorGroupsDiv = document.getElementById('colorGroupsDiv')
+
+  onmessage = (event) => {
+
+    // Show all collections
+    let pluginMessage = event.data.pluginMessage
+    debugger;
+
+    let colorGroups = pluginMessage.colorGroups
+    colorGroups.forEach(group => {
+      // Create a div container
+      let singleGroupDiv = document.createElement('div')
+      singleGroupDiv.id = group.name
+      // Add the name of the group
+      let groupName = document.createElement('p')
+      groupName.textContent = group.name
+      singleGroupDiv.appendChild(groupName)
+      // Add a button
+      let groupButton = document.createElement('button')
+      groupButton.className = "secondary-button"
+      groupButton.textContent = "Create color palettes"
+      singleGroupDiv.appendChild(groupButton)
+
+      colorGroupsDiv.appendChild(singleGroupDiv)
+    })
+  }
+
+  createPalette = (colorPalette) => {
+    // Create a frame named {paletteName}
+    let paletteFrame = figma.createFrame()
+    paletteFrame.name = colorPalette.name
+
+    // Create a text with the {paletteName}
+    let paletteNameText = figma.createText()
+    paletteNameText.characters = colorPalette.name
+
+    // Add a frame named "Colors"
+    let colorsFrame = figma.createFrame()
+    colorsFrame.name = "Colors"
+
+    // Add a frame "Color Wrapper" for each color
+    colorPalette.colors.forEach(color => { // todo check was hier tatsächlich ankommt
+      debugger;
+      let colorWrapper = figma.createFrame()
+      colorWrapper.name = "Color Wrapper"
+
+      // Add the name of the color. E.g. "100", "200" etc.
+      let colorValueText = figma.createText()
+      colorValueText.characters = color.name
+      colorWrapper.appendChild(colorValueText)
+
+      // Add a frame filled with the color
+      let colorFrame = figma.createFrame()
+      colorFrame.name = "Color"
+      colorFrame.fills = [{ type: 'SOLID', color: color.value }] // todo hier muss variable gesetzt werden!
+      colorWrapper.appendChild(colorFrame)
+      
+      colorsFrame.appendChild(colorWrapper)
+    })
+
+
+    // Fills and strokes must be set via their immutable arrays
+    // node.setBoundVariable('width', widthVariable)
+    // const fillsCopy = clone(node.fills)
+    // fillsCopy[0] = figma.variables.setBoundVariableForPaint(fillsCopy[0], 'color', colorVariable)
+    // node.fills = fillsCopy
+
+  }
+
+
+</script>
+<style>
+  @import url("https://rsms.me/inter/inter.css");
+
+  :root {
+    --xsmall-gap: 0.3rem;
+    --small-gap: 0.5rem;
+    --medium-gap: 0.75rem;
+    --large-gap: 1.5rem;
+    --touchtarget: 2.5rem;
+
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+
+    --color-white: #ffffff;
+    --color-text: var(--color-white);
+    --color-text-medium-emphasis: #e0e0e0;
+    --color-surface-sunken: #2C2C2C;
+    --color-surface-raised: #383838;
+
+    --color-border: #D8D8D8;
+
+    --color-primary: #FFEBB4;
+    --color-surface-accent-primary: rgba(255, 235, 180, 0.16);
+    --color-on-primary: #1e1d1a;
+
+    --color-divider-low-emphasis: #414141;
+
+    --font-size-small: 0.875rem;
+    --font-size-medium: 1rem;
+    --font-size-large: 1.25rem;
+  }
+
+  * {
+    font-size: 14px;
+    line-height: 120%;
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: var(--font-weight-regular);
+    color: var(--color-text);
+
+  }
+
+  body {
+    background: var(--color-surface-sunken);
+    margin: 0;
+  }
+
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 0;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: var(--font-weight-medium);
+  }
+
+  h2,
+  summary {
+    font-size: 1.125rem;
+    font-weight: var(--font-weight-medium);
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: var(--font-weight-medium);
+  }
+
+  p {
+    margin: 0;
+  }
+
+  button {
+    font-weight: var(--font-weight-medium);
+    display: inline-flex;
+    height: var(--touchtarget);
+    min-height: var(--touchtarget);
+    min-width: var(--touchtarget);
+    padding: 0 var(--xsmall-gap);
+    justify-content: center;
+    align-items: center;
+    border-radius: 0.5rem;
+    background: none;
+    text-wrap: nowrap;
+  }
+
+  button:hover {
+    cursor: pointer;
+  }
+
+  button.primary-button {
+    color: var(--color-on-primary);
+    background: var(--color-primary);
+    border: 1px solid var(--color-primary);
+  }
+
+  button.primary-button:hover {
+    filter: brightness(0.9);
+  }
+
+  button.secondary-button {
+    border-radius: 0.5rem;
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+  }
+
+  button.secondary-button svg {
+    fill: var(--color-primary);
+  }
+
+  button.secondary-button:hover {
+    outline: 1px solid var(--color-primary);
+  }
+
+  button.tertiary-button {
+    color: var(--color-text);
+    border: none;
+    background: none;
+  }
+
+  button.tertiary-button svg {
+    fill: var(--color-text);
+  }
+
+  button.tertiary-button:hover {
+    background-color: var(--color-surface-accent-primary);
+  }
+
+  /**
+    * Style the summary
+    */
+  summary {
+
+    padding-bottom: var(--small-gap);
+    padding-top: var(--small-gap);
+  }
+
+  summary:hover {
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /**
+    * Style the header section
+    */
+  #header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--small-gap);
+
+    padding: var(--large-gap);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+
+    background: var(--color-surface-sunken);
+    border-bottom: solid 1px var(--color-divider-low-emphasis);
+  }
+
+  #pluginWrapper {
+    padding: var(--large-gap);
+  }
+
+  /**
+    * Style the color palette groups
+    */
+  .color-wrapper {
+    display: flex;
+    width: 10rem;
+    padding: var(--medium-gap);
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: var(--small-gap);
+
+    border-radius: var(--medium-gap);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-default);
+  }
+
+  .color-wrapper .color {
+    display: flex;
+    height: 5rem;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    align-self: stretch;
+    border-radius: var(--medium-gap);
+    background: var(--color-primary);
+  }
+</style>
