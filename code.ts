@@ -368,6 +368,7 @@ async function createPalette(colorPaletteToCreate: VariableHierarchyPalette, par
       colorValueText.characters = color.name
       colorValueText.fills = [{ type: "SOLID", color: textColor }]
       colorValueText.layoutAlign = 'STRETCH'
+      colorValueText.textTruncation = 'ENDING';
       colorWrapper.appendChild(colorValueText)
 
       // Create a frame to be filled with the color

@@ -1,5 +1,9 @@
 <div id="pluginWrapper">
   <div id="variableCollectionDiv"></div>
+  <div class='author'>
+    <p>❤️ Made by Franziska Haaf from the Design System and User Experience team (DSUX) @REWE Digital</p>
+    <p>Contact me for help or feedback.</p>
+  </div>
 </div>
 <script>
 
@@ -377,13 +381,14 @@
     margin-top: var(--small-gap);
   }
 
-  .palette-row, .group-section {
+  .palette-row,
+  .group-section {
     padding: var(--medium-gap);
     background-color: var(--color-surface-sunken);
     border-radius: var(--medium-gap);
   }
 
-  .group-section .palette-row{
+  .group-section .palette-row {
     background-color: transparent;
     border-radius: 0;
     padding: var(--medium-gap) 0;
@@ -429,5 +434,15 @@
     align-self: stretch;
     border-radius: var(--medium-gap);
     background: var(--color-primary);
+  }
+
+  .author {
+    padding: var(--large-gap);
+    width: 100%;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .author p {
+    color: var(--color-text-medium-emphasis);
   }
 </style>
