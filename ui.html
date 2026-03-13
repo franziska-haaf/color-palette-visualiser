@@ -26,6 +26,10 @@
     return paletteRow
   }
 
+  /**
+   * * Render a group node recursively. A group can contain palettes or other groups. 
+   * * E.g. "color" group with palettes "red" or "blue"
+   **/
   function renderGroupNode(collectionId, group) {
     let groupSection = document.createElement('details')
     groupSection.className = 'group-section'
@@ -37,15 +41,20 @@
     summaryContentWrapper.classList.add('summary-content-wrapper')
 
     let groupTitle = document.createElement('h3')
+
+    let groupTitleLabel = document.createElement('span')
+    groupTitleLabel.textContent = 'group'
+    groupTitleLabel.className = 'group-title-label'
+    summaryContentWrapper.appendChild(groupTitleLabel)
     summaryContentWrapper.appendChild(groupTitle)
     groupTitle.className = 'group-title'
     groupTitle.textContent = group.name
-   
+
 
     let createGroupButton = document.createElement('button')
     summaryContentWrapper.appendChild(createGroupButton)
     createGroupButton.className = 'secondary-button group-create-all-button'
-    createGroupButton.textContent = 'Create palettes for whole group'
+    createGroupButton.textContent = 'Create ' + (group.palettes ? `${Object.keys(group.palettes).length}` + ' palettes' : '')
     createGroupButton.addEventListener('click', (event) => {
       event.preventDefault()
       event.stopPropagation()
@@ -76,6 +85,9 @@
     return groupSection
   }
 
+  /**
+   * * Render a Variable Collection. E.g. "Core" or "Design Tokens | Light"
+   **/
   function renderCollectionNode(collection) {
     let collectionSection = document.createElement('details')
     collectionSection.className = 'collection-section'
@@ -103,6 +115,13 @@
       collectionBody.appendChild(createPaletteRow(collection.id, palette))
     })
 
+    if (collectionBody.children.length === 0) {
+      let emptyState = document.createElement('p')
+      emptyState.textContent = 'No colors found in this collection'
+      emptyState.classList.add('empty-state')
+      collectionBody.appendChild(emptyState)
+    }
+
     collectionSection.appendChild(collectionBody)
     return collectionSection
   }
@@ -120,7 +139,7 @@
     })
   }
 
-   
+
 
 </script>
 <style>
@@ -200,17 +219,20 @@
     font-weight: var(--font-weight-medium);
   }
 
-  .group-title {
-    font-size: 1rem;
-    font-weight: var(--font-weight-medium);
-    display: inline;
-    margin-right: var(--small-gap);
-  }
 
   p {
     margin: 0;
   }
 
+  .empty-state {
+    color: var(--color-text-disabled);
+    width: 100%;
+    text-align: center;
+  }
+
+  /**
+    * Style the buttons
+    */
   button {
     font-weight: var(--font-weight-medium);
     display: inline-flex;
@@ -264,12 +286,47 @@
   }
 
   /**
-    * Style the summary
+    * Style the group section
+    */
+  .group-title-label {
+    background-color: var(--figma-color-bg-component);
+    padding: var(--xsmall-gap);
+    border-radius: var(--xsmall-gap);
+  }
+
+  .group-title {
+    font-size: 1rem;
+    font-weight: var(--font-weight-medium);
+    display: inline;
+    margin-right: var(--small-gap);
+  }
+
+  .group-section {
+    border-radius: var(--medium-gap);
+    padding: var(--medium-gap);
+    background: var(--figma-color-bg-secondary);
+  }
+
+  .group-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--small-gap);
+    padding-left: var(--small-gap);
+    margin-top: var(--small-gap);
+  }
+
+  .group-create-all-button {
+    margin-left: auto;
+  }
+
+  /**
+    * Style the summary.
+    * Summary is the header of the expandable part. Containting the label
     */
   summary {
     padding-bottom: var(--small-gap);
     padding-top: var(--small-gap);
-    
+
     align-items: center;
     justify-content: space-between;
     gap: var(--small-gap);
@@ -279,28 +336,11 @@
     cursor: pointer;
   }
 
-  summary .summary-content-wrapper{
+  summary .summary-content-wrapper {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--small-gap);
-  }
-
-  /**
-    * Style the header section
-    */
-  #header {
-    display: flex;
-    flex-direction: column;
-    gap: var(--small-gap);
-
-    padding: var(--large-gap);
-    position: sticky;
-    top: 0;
-    z-index: 1;
-
-    background: var(--color-surface-sunken);
-    border-bottom: solid 1px var(--color-border);
   }
 
   #variableCollectionDiv {
@@ -309,12 +349,15 @@
     gap: var(--medium-gap);
   }
 
+  /**
+    * Style the collection section
+    */
   .collection-section {
-    padding: 0 var(--medium-gap) var(--medium-gap) var(--medium-gap);
+    padding: var(--large-gap);
   }
 
-  .collection-section + .collection-section{  
-border-top: 1px solid var(--color-border);
+  .collection-section+.collection-section {
+    border-top: 1px solid var(--color-border);
   }
 
   .collection-summary {
@@ -334,22 +377,16 @@ border-top: 1px solid var(--color-border);
     margin-top: var(--small-gap);
   }
 
-  .group-section {
+  .palette-row, .group-section {
+    padding: var(--medium-gap);
+    background-color: var(--color-surface-sunken);
     border-radius: var(--medium-gap);
-    padding: 0 var(--medium-gap) var(--medium-gap) var(--medium-gap);
-    background: var(--figma-color-bg-secondary);
   }
 
-  .group-body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--small-gap);
-    padding-left: var(--small-gap);
-    margin-top: var(--small-gap);
-  }
-
-  .group-create-all-button {
-    margin-left: auto;
+  .group-section .palette-row{
+    background-color: transparent;
+    border-radius: 0;
+    padding: var(--medium-gap) 0;
   }
 
   /**
@@ -360,10 +397,9 @@ border-top: 1px solid var(--color-border);
     justify-content: space-between;
     align-items: center;
     gap: var(--small-gap);
-    padding: var(--small-gap);
   }
 
- .palette-row + .palette-row {
+  .palette-row+.palette-row {
     border-top: 1px solid var(--color-border-medium-emphasis);
   }
 
