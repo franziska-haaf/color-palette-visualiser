@@ -284,6 +284,18 @@ function setBorderRadiusForAll(figmaFrame: FrameNode, radius: number) {
 }
 
 /**
+ * A helper function to set the padding for all sides of a frame
+ * @param figmaFrame the frame to set the padding for all sides
+ * @param padding the padding to set
+ */
+function setPaddingForAll(figmaFrame: FrameNode, padding: number) {
+  figmaFrame.paddingLeft =
+    figmaFrame.paddingRight =
+    figmaFrame.paddingTop =
+    figmaFrame.paddingBottom =
+    padding;
+}
+/**
  * 
  * @param colorPaletteToCreate the hierarchy palette to render in Figma
  */
@@ -298,11 +310,7 @@ async function createPalette(colorPaletteToCreate: VariableHierarchyPalette, par
     if (parentFrame) parentFrame.appendChild(paletteFrame)
     paletteFrame.name = colorPalette.name
     paletteFrame.layoutMode = 'VERTICAL'
-    paletteFrame.paddingLeft =
-      paletteFrame.paddingRight =
-      paletteFrame.paddingTop =
-      paletteFrame.paddingBottom =
-      dimensionLarge;
+    setPaddingForAll(paletteFrame, dimensionLarge);
     paletteFrame.layoutSizingHorizontal = 'HUG'
     paletteFrame.itemSpacing = dimensionMedium
     setBorderRadiusForAll(paletteFrame, dimensionMedium);
@@ -339,11 +347,7 @@ async function createPalette(colorPaletteToCreate: VariableHierarchyPalette, par
       colorWrapper.name = "Color Wrapper"
       colorWrapper.layoutMode = 'VERTICAL'
       colorWrapper.layoutSizingHorizontal = 'HUG'
-      colorWrapper.paddingLeft =
-        colorWrapper.paddingRight =
-        colorWrapper.paddingTop =
-        colorWrapper.paddingBottom =
-        dimensionMedium;
+      setPaddingForAll(colorWrapper, dimensionMedium);
       colorWrapper.itemSpacing = dimensionSmall;
       colorWrapper.strokes = [{ type: "SOLID", color: borderColor }];
       setBorderRadiusForAll(colorWrapper, dimensionMedium);
@@ -363,7 +367,10 @@ async function createPalette(colorPaletteToCreate: VariableHierarchyPalette, par
       let colorFrame = figma.createFrame()
       colorWrapper.appendChild(colorFrame) // Place in color wrapper
       colorFrame.name = "Color"
-      colorFrame.resize(100, 100)
+      colorFrame.layoutMode = 'VERTICAL'
+      colorFrame.resize(100, 60)
+      colorFrame.counterAxisAlignItems = 'CENTER'
+      setPaddingForAll(colorFrame, dimensionSmall);
       setBorderRadiusForAll(colorFrame, dimensionMedium);
 
       // Load the variable for the color id
@@ -374,7 +381,64 @@ async function createPalette(colorPaletteToCreate: VariableHierarchyPalette, par
         fillsCopy[0] = figma.variables.setBoundVariableForPaint(fillsCopy[0], 'color', fillColorVariable);
         colorFrame.fills = fillsCopy;
       }
+
+      // Add the contrast with white on the color
+      let whiteContrastText = figma.createText()
+      colorFrame.appendChild(whiteContrastText) // Place in color wrapper
+      whiteContrastText.fontName = regularFont;
+      whiteContrastText.name = "Contrast"
+      let resolvedFillColor: RGB = { r: 0, g: 0, b: 0 };
+      if (Array.isArray(colorFrame.fills) && colorFrame.fills.length > 0) {
+        const paint = colorFrame.fills[0];
+        if (paint.type === "SOLID" && 'color' in paint) {
+          resolvedFillColor = paint.color;
+        }
+      }
+      let contrastWithWhite = calculateContrast({ r: 1, g: 1, b: 1 }, resolvedFillColor).toFixed(2);
+      whiteContrastText.characters = contrastWithWhite;
+      whiteContrastText.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }]
+
+      if (parseFloat(contrastWithWhite) >= 4.5) {
+        let hasContrastAA = figma.createText()
+        hasContrastAA.characters = "AA"
+        hasContrastAA.name = "AA"
+        hasContrastAA.fontName = regularFont;
+        colorFrame.appendChild(hasContrastAA) // Place in color wrapper
+        hasContrastAA.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }]
+      }
+
     })
     figma.viewport.scrollAndZoomIntoView([paletteFrame])
   }
+}
+
+/**
+ * 0.2126 * R + 0.7152 * G + 0.0722 * B
+ */
+function calculateLuminance(color: RGB): number {
+  // Convert sRGB to linear RGB
+  const r = color.r <= 0.03928 ? color.r / 12.92 : Math.pow((color.r + 0.055) / 1.055, 2.4);
+  const g = color.g <= 0.03928 ? color.g / 12.92 : Math.pow((color.g + 0.055) / 1.055, 2.4);
+  const b = color.b <= 0.03928 ? color.b / 12.92 : Math.pow((color.b + 0.055) / 1.055, 2.4);
+
+  // Calculate relative luminance
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * Contrast is being caluclated by: (L1 + 0.05) / (L2 + 0.05) , whereaas 
+ * L1 is the relative luminance of the lighter of the colors and 
+ * L1 the relative luminance of the darker of the colors
+ * @param color1 
+ * @param color2 
+ * @returns 
+ */
+function calculateContrast(color1: RGB, color2: RGB): number {
+  const luminance1 = calculateLuminance(color1);
+  const luminance2 = calculateLuminance(color2);
+
+  const lighter = Math.max(luminance1, luminance2);
+  const darker = Math.min(luminance1, luminance2);
+
+  return (lighter + 0.05) / (darker + 0.05);
 }
