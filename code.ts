@@ -349,7 +349,14 @@ async function createPalette(colorPaletteToCreate: VariableHierarchyPalette, par
       colorWrapper.layoutSizingHorizontal = 'HUG'
       setPaddingForAll(colorWrapper, dimensionMedium);
       colorWrapper.itemSpacing = dimensionSmall;
-      colorWrapper.strokes = [{ type: "SOLID", color: borderColor }];
+      
+      if(color.name.toLowerCase() !== 'core' && color.name.toLowerCase() !== 'og'){
+        colorWrapper.strokes = [{ type: "SOLID", color: borderColor }];
+        colorWrapper.fills = [{ type: "SOLID", color: surfaceColor }];
+      } else{
+        colorWrapper.fills = [{ type: "SOLID", color: surfaceColorSunken }];
+      }
+
       setBorderRadiusForAll(colorWrapper, dimensionMedium);
       //todo add border
 
